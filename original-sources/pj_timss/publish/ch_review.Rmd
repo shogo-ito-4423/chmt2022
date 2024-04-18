@@ -1,0 +1,111 @@
+```{r}
+library(tidyverse)
+library(dagitty)
+library(ggdag)
+```
+
+## 本章の目標
+本章の目標は、社会経済的背景による学力差(学力格差)の原因に関する、教育社会学領域の先行研究と課題を整理することである。順に、「教育社会学において学力はどのような位置づけであるのか」「教育達成格差・学力格差のメカニズムにはどのような説明があるのか」「現行の有力な説明とその課題は何か」という点について、確認を行う。
+
+## 社会経済的背景による教育達成格差に関する議論
+### 社会経済的背景による教育達成格差の要因に関する議論
+教育社会学では、子どもの学業達成が出身家庭の社会経済的背景(SES)に規定される現象の原因について、解明を進めてきた。従来の研究では、教育達成の基準として、最終的な社会的地位としての学歴と、中間的な評価としての学力(成績)という、2点に着目してきた。SES・学歴・学力の3者関係は、図\@ref(fig:dagHirasawa2013)のように、(1)SES→学力、(2)学力→学歴、(3)SES→学歴、という形で表現が可能である\citep[152]{kazushiShakaikaisotokyoikukenkyunodokotokadai2013}。(1)と(2)を合わせた経路は、「有利な階層(専門や大企業ホワイトカラー)の家庭に育つと成績が高くなり, 成績が高いと学歴も高くなる」\citep[123]{kazushiKakusanoshakaigakunyumon2014}というメカニズムを表現したものであり、これを「成績を媒介とした, 出身階層の学歴に対する**間接効果**」\citep[123]{kazushiKakusanoshakaigakunyumon2014}と呼ぶ。(3)の経路は、「成績を統制したときの, 学歴に対する出身階層の影響」\citep[125]{kazushiKakusanoshakaigakunyumon2014}であり、これを「**直接効果**」\citep[125]{kazushiKakusanoshakaigakunyumon2014}と呼ぶ。これまでの調査では、学歴に対するSES(出身階層)の効果は、学力を介した間接効果だけでなく、学力を介さない直接効果も観察されている。例えば、社会学者の\citet[123-126]{kazushiKakusanoshakaigakunyumon2014}は、2005年SSMデータを使用し、1956年から1970年生まれの男性について、父親の職業および本人中学3年生時の成績(自己申告)と大学進学の関係を分析した。結果として、中学3年生時の成績が同じであっても、父親の職業がホワイトカラー職や専門職であったほうが、ブルーカラー職や農業に従事していた場合よりも、大学進学率が高いことを提示している。
+
+```{r dagHirasawa2013, fig.cap="SES・学力・学歴の関係概念図"}
+ggdag::dagify(
+  credential ~ ses + score,
+  score ~ ses,
+  labels = c(
+      "ses" = "SES(出身階層)",
+      "score" = "学力",
+      "credential" = "学歴"
+  ),
+  coords = list(
+      x = c(ses = 0, score = 1, credential = 2),
+      y = c(ses = 0, score = 1, credential = 0)
+  )
+) %>%
+    ggdag::ggdag(
+        use_labels = "label",
+        text = FALSE
+    ) +
+    ggdag::theme_dag()
+```
+
+### 学歴達成の階層差に関する議論
+SESと学歴・学力のうち、メカニズムについて、先行して研究が蓄積されてきたのは、SESと学歴の関係である。特に、学力を経由した、学歴に対するSESの間接効果(1+2)を統制しても、学歴に対するSESの直接効果(3)がなお確認できることから\citep[123-126]{kazushiKakusanoshakaigakunyumon2014}、そのメカニズムに関する研究が進められてきた。
+とりわけ有力なメカニズムは、それぞれ、(A)経済的要因、(B)文化的要因、(C)合理的選択理論、による説明の3点である。以下、社会学者である\citet{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}によるレビューを中心に参照し、それぞれのメカニズムについて、簡単に説明する。ただし、本稿は、これらの議論を評価することは、主たる目的ではない。
+
+#### (A)経済的要因
+経済的要因による説明は、主に2つの観点に基づくものである。完全に分離しているわけではないものの、それぞれ直接効果と間接効果に対応しているとみなすことができる。
+1点目は、家庭の経済状況が進学自体の決定に与える影響である。「経済的要因がある特定の時点において影響するという意味で，所得効果の短期的側面といえる」\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}ことから、どちらかといえば直接効果に関連した説明である。この観点は、「教育を受けるための費用と受けたことによる便益を考慮した投資活動としての側面を重視する」\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}、教育経済学における人的資本論に立脚している。人的資本論の立場からは、進学するか否かという個人の決定は、「入学金や授業料などの直接費用と，進学せずに働いていれば得られたであろう放棄所得」\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}などの費用と、「教育を受けることによって知識や技能が身につき生産能力が向上する」\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}ことによる「将来の賃金の上昇」\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}という便益を比較した上で判断される。仮に、進学費用を自由に調達(給付や借り入れなど)できるならば、家庭の経済状況と進学行動は無関係である。しかし、実際には、進学費用について、自由な調達という仮定は成立せず、家庭の経済状況に依存する\citep[196]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}。このことが、SESによる学歴達成の差異を生む。
+2点目は、家庭の経済状況が、子どもが育つ環境に与える影響である。「長期的な環境効果を重視する立場」\citep[197]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}からの観点であり、どちらかといえば間接効果に焦点を当てた説明である。端的には、家庭の収入が高いほど、子どもにより良い教育資源を与えることができ、保護者のストレスも少なく、より成功に直結する価値や規範を伝達することができる、というものである\citep[197]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}。一方で、教育資源の用意や価値規範の伝達については、経済状況だけでなく、後ほど確認する文化的要因との関連も考えられる。そのため、どこまでが経済状況(所得)の影響であるか、経済的要因と文化的要因を切り分けることができるのか、という点については、検討が必要である。
+
+#### (B)文化的要因
+文化的要因による説明は、「家庭内での社会化によって教育に対する態度や価値が親から子どもに伝達され，それが学歴やその後の社会的地位に転換される」\citep[198-199]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}という立場に基づくものである。文化的要因による説明が生まれた背景には、「日本を含めた多くの産業社会では，経済成長を経験することによって家庭所得が大幅に上昇したにもかかわらず，教育機会の不平等は依然として解消されない状況にあった」\citep[197]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}ことが挙げられる。また、文化的要因による説明は、「家庭内における長期的な社会化を重視した見方」\citep[199]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}であることから、間接効果との親和性が高いと考えられるが、直接効果にも適用可能である。
+ここでは、教育達成格差のメカニズムについて特に影響を与えた議論として、ブルデューによる「文化資本」論を挙げる。詳細については、後ほど述べる。文化資本と教育達成の関連について議論する際に、特に着目すべき点は、教育機関に評価される文化が、階層上位の文化に偏在している点である\citep[198]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}。学校等の教育機関は、ある種の公的な地位証明を行うが、そこで特に評価されるのは、SESが相対的に上位である集団に特有の文化である。SES上位層出身の学生は
+、そうでない学生よりも、学校で評価される振る舞いを身につけている。このことが、SESによる学力および学歴達成の差異を生む。
+
+#### (C)合理的選択理論
+合理的選択理論とは、「人々の行為を合理的に選択されたものとして説明することを通して, 人々の行為の結果として生じている社会現象を説明する, という形式をもつ理論的試み一般のこと」\citep[137]{kazuoGoritekisentakuriron1997}である。費用と便益の計算という意味では、経済的要因による説明と共通するが、合理的選択理論おいては、費用および便益は経済的なものに制限されない\citep[164]{tateSurishakaigakuwansuteppuappukozaGoritekisentakurironnokisotooyo2017}。
+合理的選択理論では、特に直接効果を説明することに重点を置く。進学行動に合理的選択理論を適用した社会学者の\citet[89]{boudonInegaliteChancesMobilite1973}は、間接効果を文化的な遺産の影響、直接効果を社会的位置の影響とし、直接効果のメカニズム解明に注力した。進学行動に対する合理的選択理論の適用において、中心となる発想は、費用を(経済的要因による説明と同じく)進学費用とし、便益を「現在(親)の社会的地位から下降するリスクの回避」とみなすことである。この発想に基づくならば、SES(出身階層)により、相対的な費用と便益は異なる。具体的に、SES上位の家庭で、大学進学を想定すると、以下のようになる。まず、費用は、比較的容易に調達できることから、相対的に小さい。次に、便益は、現在の地位を維持するためには、大学進学が必須であることが多いので、相対的に高い。よって、SES上位層家庭の子どもにとって、大学進学は価値のある行動であるといえる。逆に、SES下位層の家庭では、費用と便益がそれぞれ反転するため、大学進学はそれほど価値のない行動になる\citep[199-200]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}。
+
+### 学力階層差のメカニズムに関する議論
+SES-学歴関係に関するメカニズムのうち、SESと学力の関係(SES-学歴関係における間接効果)も含めているのは、(B)文化的要因による説明である。実証研究においても、(B)文化的要因に関する説明がほぼ「定説」と化している\citep{kazushiShakaikaisotokyoikukenkyunodokotokadai2013}。SES-学歴関係のメカニズムとして、合理的選択仮説を提示した\citet[72-74]{boudonInegaliteChancesMobilite1973}も、SESによって成績が異なるという現象については、文化的な遺産の影響であるとした。SES-学力関係のメカニズムに関する研究は、経済・社会関係(人的なつながり)の要因を追加しつつも、文化的再生産仮説の枠を維持したまま、仮説の拡張が試みられている状況である\citep{baroneCulturalCapitalAmbition2006}。
+
+### 実践の観点による枠組みの選択
+本稿では、文化的な要因による説明を、主な理論的枠組みとして採用する。主な理由は、学力格差縮小に貢献するためのメカニズム解明、という本稿の目的に、最も適しているからである。
+経済的要因・文化的要因・合理的選択理論による説明は、前述の通り、それぞれの理論的な限界を超えるために生み出されてきた仮説である。一方で、それぞれの説明は、完全に置き換えられるものではなく、互いに補完しあうものとみなすことが妥当である\citep[204]{waguKyoikukikainokaisosanikansururirontekisetsumeinokento2011}。これらの仮説は重なり合う部分も多く、出身家庭の社会経済的背景によって何らかの選好が異なる、という前提は一致している。よって、理論的枠組みの選択にあたっては、それぞれの仮説から1つを選択するという方法はとらない。ただし、核となる要素は決める必要がある。
+前述の議論を踏まえた上で、核となる要素として最も適切であるのは、文化的な要因であると考えられる。まず、経済的要因に還元できない事象が見られるという点において、文化的な要因と合理的選択理論が有効である。次に、文化的な要因と合理的選択理論による説明は、SESによる選好の相違を扱うという点は一致している。最後に、実践において必要になるのは要因の定義であり、文化的な要因は定義に関する研究の蓄積がある。以上の理由から、文化的要因を枠組みとする。
+
+### 義務教育前後の家庭内教育実践に着目する必要性
+SESによる学歴差について、文化的な要因に着目することを、これまでの議論で確認した。次は、着目する時期について、義務教育開始(小学校入学)前後の家庭内教育実践にすることを確認する。理由は、学力の階層差が義務教育の初期段階から確認され、その格差が年齢を重ねた後も維持されるからである。\citet[61-62]{keikiGakuryokukakusakakudainoshakaigakutekikenkyuShochugakuseienotsuisekitekigakuryokuchosakekkagashimesumono2017}は、「青少年期から成人期への移行についての追跡的研究(JELS)」で得られたパネルデータを用いて、小学3年生時における両親学歴による学力格差が、小学6年生時と中学3年生時にも維持されることを明らかにした。義務教育が始まるまで、子どもは家庭や、保護者が決めた幼稚園・保育園や習い事などの空間で、大部分の時間を過ごすと考えられる。義務教育開始後には、学校に通う時間が大きな割合を占めるが、中学校や高校といった後の教育段階よりも時限は少なく、引き続き、保護者の決定権が大きな空間で時間を過ごすと考えられる。すなわち、義務教育前後に子どもが過ごす時間のあり方は、家庭によって決定される余地が相対的に大きい。これらの事実から、少なくとも学力の階層差に関するメカニズムを解明する上で、義務教育前後の家庭内教育実践に着目することが有効と考えられる。
+
+### まとめ
+本節では、学力の階層差について、文化的な要因による枠組みを用いることが有効であり、かつ、義務教育開始前後の家庭における教育意識に着目する必要があることを確認した。次節では、具体的にどの教育意識が再生産に貢献するのか、という議論を整理する。
+
+
+## 社会経済的背景による教育意識の差異に関する議論
+### 教育意識とその捉え方
+学力格差を生み出す文化的要因の差異は、保護者の教育意識によって規定された、親子の日常生活を通して生み出されると考えられる。よって、SESによる学力差を解明するためには、2点の観察が必要である。まず、教育意識・行動が、SESによってどのように異なるのか、という点である。本節では、参与調査に基づいた\citet{lareauUnequalChildhoodsClass2011}、質問紙調査に基づいた\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}を中心に参照し、これまでの議論を整理する。次に、観察された教育意識が、学力にどのような影響を与えているか、という点である。本節では、多重対応分析に基づいた\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}を中心に参照し、これまでの議論を整理する。
+
+### 文化資本・界概念の背景
+教育意識について議論を行う前に、教育意識を捉える手段として、ブルデューの「文化資本」論について確認する。
+ブルデューの研究における「資本」については、様々な定義が存在するが、概ね「生活条件の集合を大まかに種別する基本的な差異」\citep[193]{bourdieuDistinctionCritiqueSociale1979}のことを指す。特に、経済資本・文化資本・社会関係資本が、人々の社会生活を規定する\citep[193]{bourdieuDistinctionCritiqueSociale1979}。
+ブルデューが文化資本概念を生み出した背景は、(フランスにおける)社会的地位の多元性を表現することにあった。例として、経済的に豊かであっても、必ずしも評価されない事例(「教養がない」「品がない」など)は、日常的に見受けられると考えられる。ブルデューは、同等の経済的地位の中でも、職業によって嗜好が分かれることの多い趣味活動に着目した。趣味活動の関連性を数量化し、それにより生み出される2次元平面上に職業を配置することで、文化が社会的地位を規定することを証明した\citep[141-144]{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}。
+文化資本の概念を成立させるために必要な装置が、「界」の概念である。どのような文化資本が効果を発揮するのかという問いは、そこで想定される界の特性は何かという問いである\citep[41]{naokiBurudyuniokerusakaigainen2008}。そして、それぞれの界は、人々の活動を通して構築された「空間」によって記述される。すなわち、ある社会的課題における文化資本の役割を確認するためには、課題と密接に関わる界の空間を構築することから始める必要がある。なお、界どうしを結ぶ上で必要になるのが、個人に蓄積された経験・見方によって規定される振る舞いである「ハビトゥス」である\citep[41-44]{naokiBurudyuniokerusakaigainen2008}。
+\citet[41]{naokiBurudyuniokerusakaigainen2008}は、文化資本とは何かを問うことは意味がないとする。しかし、「(文化)資本とは何か」という(誤解された)問いのもとで得られた答えを、「ある界で評価される資本は何か」という問いに対する答えとすることは、必ずしも不可能ではないと考えられる。本稿では、文化資本を定義しようとする問いであっても、界で評価される資本を定義する問いとして解釈できるできるものは、できる限りそのように解釈し、その上で限界を検討する。
+
+### 養育にみる教育意識の差異
+\citet{lareauUnequalChildhoodsClass2011}では、SES上位層の養育形式を”Concerted Cultivation”(協調的養育)、SES下位層の養育形式を”The Accomplishment of Natural Growth”(自然放任的養育)と定義し、その差異が教育達成の格差に影響していることを示唆した\citep[31]{lareauUnequalChildhoodsClass2011}。協調的養育と自然放任的養育のそれ自体は、単なる養育方針の違いである。しかし、学校で求められる規範は協調的養育との親和性が高く、そのことが教育達成に影響を与えることが、SESによる格差という形で出現する。養育方針の観点として、ラローは、自己管理能力につながる「放課後の過ごし方」、思考力につながる「言葉遣い」、子どもが受ける教育の質につながる「母親との学校等のつき合い方」に着目した\citep[23-26]{yukiKateiKyoikuNo2008}。
+協調的養育・自然放任的養育の概念が生まれた背景には、それ以前の研究において、教育達成と結び付けられてきた文化的要素が、親子の生活と離れたものであったことが挙げられる。教育達成との関連において、文化的な要素は、\citet{dimaggioCulturalCapitalSchool1982}のように、「高尚な」行為や所有物を中心に取り上げられ、スキルや人的資本といった概念は含まれていなかった。一方で、\citet{lareauCulturalCapitalEducational2003}は、文化的要素の範囲を拡張することを提案し、「教育機関が学生に期待することを実現するもの」として広く解釈した。ラローによれば、文化的な要因によって再生産が実行されるのは、社会で高尚とされる特定の行為においてではなく、日常の生活空間においてである。そこで、ラローは教育達成が社会経済的背景によって格差が生まれる要因を、養育形式の差異に求めた。
+
+### 養育形式の差異に関する実証研究
+養育形式の差異は、日本においても、様々な調査から実証されてきた。「21世紀出生児縦断調査」を使用した\citet{ryojiKyoikuKakusa2019}、「社会生活基本調査」を使用した\citet{takeshitokuShochukoseinoseikatsujikanniokerushakaikaisosatooyanokodomoenokanyo2020}、「JELS(青少年期から成人期への移行についての追跡的研究)」を使用した\citet{hiroakiSeishonenkikaraseijinkienoikonitsuitenotsuisekitekikenkyuJapanEducation2022}によって、保護者のSESが高いほど、より教育的な活動が充実していることが示されている。
+
+### 養育形式の差異に関する議論の課題
+協調的養育と自然放任的養育という2つの養育形式を、ラローは具体的に描写することで、教育達成格差のメカニズムを示唆している。一方で、ラローの調査では、養育形式を(ブルデューが想定したような)空間として描くという点について、限界がある。ラローは3つの観点を提示しているが、互い異なる組み合わせ方をされるものとしては、想定されていない(1つが協調的養育ならば、他の2つも協調的養育である)。そこで、界や空間の概念を積極的に取り入れた分析が必要である。
+
+### 養育に関する空間の構築に関する実証研究
+界・空間概念と、階層・学力との関連を分析した代表的な研究として、\citet{hiroyukiShakaikukantogakuryokunokaisosa2012}、\citet{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}および\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}が挙げられる。このうち、\citet{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}と\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}は両者とも、西日本のある自治体で実施された、公立小学校に通う児童とその保護者を対象とした質問紙調査を使用し、親子の日常生活に関する空間を使用した分析を行っている。
+\citet{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}は、保護者の子育て空間を関心とした研究である。空間構築の結果、「保護者の子育て活動が, 全般的に活動が活発な人々とそうでない人々に分かれる」\citep[166]{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}という分化だけでなく、「学校・地域の活動に参加するかどうかという対立が，年収や学歴の高低と関連する子育ての活発さと異なる軸を構成」\citep[166]{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}するという分化が明らかになった。ただし、地域参加の志向性は、学力やSESとは強く関連せず、「両親が海外生まれ・母常勤・母親以外の回答者」\citep[166]{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}といった要因との結びつきが強いとされる。
+一方、\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}は、子どもの生活様式空間を関心とした研究である。空間の構築には、子どもが日常生活でよく行うことに関する質問項目を使用した。そのうえで、SESおよび学力との関連を分析した。空間構築の結果、単に学校に親和的か否かという分化だけでなく、親和性の方向が「生活指導への適応」と「業績主義への適応」に分化することが明らかになった。この解釈は、「海外旅行や博物館・美術館、クラッシック、塾といった、いかにも学校の業績(学力や成績)をめぐる競争で有利に働くような変数」\citep[151]{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}と、「学校の生徒指導に対してネガティブに働きうる行動を示す変数」\citep[151]{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}が、対になる形で現れたことに基づく。業績主義の適応度が強く生徒指導への適応度が低い児童と家庭の特徴は、比較的SESが高く、男子の割合が高いことである。生徒指導の適応度が強く業績主義への適応度が低い場合は、その逆である。後者の児童は、「学校の要求に従うことに満足し、知識を獲得することができていない」\citep[163]{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}可能性がある。よって、「表面的には教師のいうことにしたがって作業をしていても、それが社会的不平等の克服につながっていない可能性がある」\citep[164]{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}ことが示されている。
+
+### 養育に関する空間の構築に関する議論の課題
+社会空間アプローチを用いて、学力階層差のメカニズムを説明する際に、これまでの研究では以下の問題がある。
+1点目は、空間内の軸について、それぞれどの程度、学力階層差の「原因」であるのか、不明確な点である。社会空間アプローチでは、階層・学力・養育の関連を述べる際に、上下左右の位置で判断することが限界である。原因としての説明力を判断するためには、線形モデルを使用する必要がある。
+2点目は、空間構築に使用する変数が、保護者から子どもへの伝達という意味での教育意識とは、必ずしも一致しない点である。\citet{toshiakiTajuutaiobunsekiniyorukosodatekukannobunsekiGakkokyoikunikakawarukatsudonichakumokushite2020}は親の意識・行動を、\citet{wataruGakkobunkatokyoikukakusaNipponshakainibunkashihongainenodotekiyosuruka2022}は子どもの意識・行動を中心に空間を構築してるが、いずれの空間も、本人のみに帰属するものと親子双方に帰属するものが混在している。学力階層差の要因として養育に関する空間を構築するならば、親子の協働に関わる意識・行動に基づく必要がある。
+
+### まとめ
+本節では、教育意識の階層差について、空間の記述に基づく議論を確認した。日常生活・養育の空間とSESに関連があり、空間軸の方向によってSESおよび学力との結びつき方が異なることが、これまでの研究から明らかにされている。しかし、従来の研究では、どのような教育意識が、学力階層差をどの程度媒介するかという点について、うまく説明できない。したがって、変数選択と分析モデルについて、改善の余地がある。
+
+## 問い
+これまでの議論を踏まえて、以下の問いを明らかにする必要がある。
+
+- RQ1: 保護者の教育意識は、どのような空間として、構築されるのか。
+- RQ2: 構築された空間において、異なる志向性の教育意識は、それぞれ学力階層差をどの程度説明するのか。
+
+RQ1は、これまでの養育に関する空間構築の議論を参照した上で、保護者から子どもへの伝達という側面を重視した教育意識の空間を構築することを目標として設定した。RQ2では、RQ1において構築した空間内の配置を元に、それぞれの方面にある要因が、学力階層差の原因として、どの程度寄与しているか明らかにすることを目標として設定した。
+
+## 小括
+本章では、まず、学力の階層差について、文化的な要因による枠組みを用いることが有効であり、かつ、義務教育開始前後の家庭における教育意識に着目する必要があることを確認した。次に、日常生活・養育の空間とSESに関連があり、空間軸の方向によってSESおよび学力との結びつき方が異なる、という点を確認した。最後に、変数の選択と分析モデルについて、改善の余地があることから、それに対応する問いを設定した。次章以降では、問いを明らかにするため、仮設とリサーチデザインを設定する。

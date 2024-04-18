@@ -1,0 +1,122 @@
+---
+title: |
+    修士論文  
+    学力階層差の要因としての教育意識に関する考察
+subtitle: |
+    —国際数学・理科教育動向調査の量的分析を通して—
+author: |
+    2021年度入学  
+    文学研究科社会学専攻博士前期課程  
+    伊藤匠梧
+output:
+    bookdown::pdf_document2:
+        latex_engine: xelatex
+        toc: true
+        keep_tex: true
+        fig_caption: yes
+documentclass: bxjsarticle
+classoption: a4paper, titlepage, 11pt
+header-includes:
+    - \usepackage{zxjatype}
+    - \usepackage{x_nissya_bib}
+    - \setjamainfont{IPAexMincho}
+    - \setcounter{secnumdepth}{2}
+    - \setlength{\parindent}{\Cwd}
+    - \setpagelayout{top=10truemm, bottom=15truemm, left=25truemm, right=25truemm}
+---
+
+```{r rmd_set, include=FALSE}
+options(tinytex.latexmk.emulation = F)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, error = FALSE, message = FALSE, dev = "cairo_pdf", dev.args = list(family = "IPAexMincho"))
+```
+
+```{r library, include=FALSE}
+library(bookdown)
+library(tidyverse)
+library(kableExtra)
+library(EdSurvey)
+library(BIFIEsurvey)
+library(GGally)
+library(modelsummary)
+```
+
+```{r, include=FALSE}
+ldf1 <- readRDS("../input/recode/recode_data/ldf_TIMSS_2015_jpn_4.obj")
+bfit0 <- readRDS("../model/model_obj/bfit0.obj")
+bfit0.pt <- lavaan::partable(bfit0$lavfit)
+```
+
+\newpage
+
+\setcounter{section}{-1}
+# 序章 {#introduction}
+```{r, child='ch_introduction.Rmd'}
+
+```
+
+
+\newpage
+
+# 学力格差の要因に関する議論 {#review}
+```{r, child='ch_review.Rmd'}
+
+```
+
+
+\newpage
+
+# 仮説設定 {#hypothesis}
+```{r, child='ch_hypothesis.Rmd'}
+
+```
+
+
+\newpage
+
+# IEA国際数学・理科教育動向調査(TIMSS)の概要と位置づけ {#survey}
+```{r, child='ch_survey.Rmd'}
+
+```
+
+
+\newpage
+
+# 教育意識空間の構築 {#mca}
+```{r, child='ch_mca.Rmd'}
+
+```
+
+
+\newpage
+
+# 教育意識による学力階層差の媒介分析 {#model}
+```{r, child='ch_model.Rmd'}
+
+```
+
+
+\clearpage
+
+# 結論 {#conclusion}
+```{r, child='ch_conclusion.Rmd'}
+
+```
+
+
+\newpage
+
+\bibliography{main.bib}
+
+\newpage
+
+---
+【あとがき】
+
+修士論文執筆にあたり、指導教員である新原道信先生、社会学専攻の先生方、新原ゼミの皆さま、ともに修士論文を書き進めた皆さまに、最後まで暖かいアドバイスとサポートを頂きました。この場で書ききることはできないですが、心より感謝申し上げます。
+
+【補遺】
+
+分析結果について補足がある場合、以下のリンクからファイルを公開します。なお、予告なく公開を停止することがあります。
+
+`https://github.com/shogo-ito-4423/chmt2022`
+

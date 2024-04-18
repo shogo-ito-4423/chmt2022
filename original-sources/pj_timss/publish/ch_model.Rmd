@@ -1,0 +1,279 @@
+```{r}
+library(tidyverse)
+library(kableExtra)
+library(dagitty)
+library(ggdag)
+library(EdSurvey)
+library(BIFIEsurvey)
+library(GGally)
+library(modelsummary)
+```
+
+```{r}
+model_list <- readRDS("../model/model_obj/model_list.obj")
+
+bfit1 <- model_list$bfit1
+bfit1.pt <- lavaan::partable(bfit1$lavfit)
+bfit2 <- model_list$bfit2
+bfit2.pt <- lavaan::partable(bfit2$lavfit)
+```
+
+## 本章の目標
+本章の目標は、仮説2に対する答えを提示することである。方法として、家庭のSESと子どもの学力を、複数の保護者教育意識が媒介する構造方程式モデルを立て、効果を推定する。そして、SESが学力に与える直接的な効果と、各種の教育意識を経由した間接的な効果について、大きさを比較することで、どのような教育意識がより学力格差を説明する要因であるのか、明らかにする。
+
+
+## 分析モデル
+### グラフによるモデル設定
+```{r dagModel, fig.cap="グラフによる変数間の関係図"}
+ggdag::dagify(
+  score ~ ses + confounders + elite + homeEdu,
+  elite ~ ses + confounders,
+  homeEdu ~ ses + confounders,
+  exposure = "ses",
+  outcome = "score",
+  labels = c(
+      "ses" = "保護者学歴",
+      "confounders" = "共変量",
+      "score" = "児童算数学力",
+      "elite" = "希少性志向",
+      "homeEdu" = "普遍性志向"
+  ),
+  coords = list(
+      x = c(ses = 0, confounders = 0, elite = 1, homeEdu = 1, score = 2),
+      y = c(ses = 0, confounders = -1, elite = -2, homeEdu = -1, score = 0)
+  )
+) %>%
+    ggdag::ggdag(
+        use_labels = "label",
+        text = FALSE
+    ) +
+    ggdag::theme_dag()
+```
+
+本章で設定するモデルにおいて、変数間の関係は図\@ref(fig:dagModel)のように表現される。本章の分析では、保護者学歴が児童の算数学力に与える効果について、直接的な効果・希少性志向教育意識を経由した間接効果・普遍性志向教育意識を経由した間接効果、の3経路を想定する。また、学力や教育意識は、保護者の学歴とは別に、児童の性別といった社会的属性からも、何らかの直接的な影響を受ける可能性があるため、これを共変量とし、統制する。
+
+### 構造方程式によるモデル設定
+分析モデルは、以下の回帰式で表現される。家庭$i$について、児童が獲得した算数得点を$Y_{i}$、保護者学歴を$a_{i}$、希少性志向教育意識を$m_{1i}$、普遍性志向教育意識を$m_{2i}$、共変量を$c_{1i}$とする。
+
+$$
+Y_{i} = q_{0} + q_{1}a_{i} + q_{2}m_{1i} + q_{3}m_{2i} + q_{4}c_{1i} + u_{i}
+$$
+
+$$
+m_{ki} = b_{k0} + b_{k1}a_{i} + b_{k2}c_{1i}
+$$
+
+
+保護者学歴から児童算数学力への直接効果$NDE$と、中間変数である教育意識$k$を経由した間接効果$PSE_{k}$は、\citet{makiHanjijitsumoderunimotozukuchokusetsukokatokansetsukokanosuitei2020}、\citet{pearlCausalInferenceStatistics2016}、およびを\citet{taguriCausalMediationAnalysis2018}参考に以下のように定義される。本稿では、中間変数および共変量の交互作用はないという前提を置く。
+
+$$
+NDE = q_{1}
+$$
+
+$$
+PSE_{k} = q_{k}b_{k1}
+$$
+
+なお、間接効果と総合効果の比は、理論上必ずしも0から1の間に収まるとは限らない。あくまでも、0から1の間に収まると仮定した場合の比率である\citep[8]{makiHanjijitsumoderunimotozukuchokusetsukokatokansetsukokanosuitei2020}。
+
+<!-- ### 直接効果・間接効果の定義
+本稿における「効果」は、Donald Rubinが提唱した反事実モデルを援用することで、「条件付き期待値の差」として定義される。直接効果および間接効果についても、反事実の枠組みを通して表現する。以下、\citet{makiHanjijitsumoderunimotozukuchokusetsukokatokansetsukokanosuitei2020}を参照し、効果の定義を確認する。
+
+本稿では、中間変数および共変量の交互作用はないという前提を置く。
+
+\citet[168]{pearlCausalInferenceStatistics2016}によれば、直接効果と間接効果を識別できるのは、共変量の集合Wが以下の条件を満たす場合である。
+
+- A-1   Wの要素にはTの子孫が一つもない。
+- A-2   Wは(T→MとT→Yを除いた後)MからYのバックドアパスをすべてブロックする。
+- A-3   TからMへの特定W効果は(おそらく実験か調整により)識別可能である。
+- A-4   {T,M}からYへの特定W同時効果は(おそらく実験か調整により)識別可能である。
+
+DAGで示したように、本稿で使用するモデルは以上の条件を満たしているので、間接効果を算出することが可能である。
+
+なお、間接効果と総合効果の比は、理論上必ずしも0から1の間に収まるとは限らない。あくまでも、0から1の間に収まると仮定した場合の比率である\citep[8]{makiHanjijitsumoderunimotozukuchokusetsukokatokansetsukokanosuitei2020}。 -->
+
+### 推定方法
+偏回帰係数の推定は、最尤推定法(ML)によって行う。前述の通り、サンプリングウェイトとPVsを考慮した推定を行う。標準誤差の算出には、構造方程式モデリングに対応した頑健な標準誤差を用いる。同じく前述の通り、多段層化抽出による誤差を補正するため、ジャックナイフ法に基づく複製ウェイトを使用し、最終的な標準誤差を算出する。なお、モデルの被説明変数(中間変数)には、多変量正規分布の仮定を満たさない2値データが含まれるため、本来であれば重み付き最小二乗推定法(WLS)を使用することが望ましい\citep[206-208]{hidekiTomoBunsanKozo2014}。しかし、複製ウェイトを使用して標準誤差を算出する場合、WLS推定法を使用すると、算出される標準誤差が不安定になることが確認される。よって、ML推定法と頑健な標準誤差を併用し、標準誤差の過小推定への対応から有意水準は1%とする。分析には、`BIFIEsurvey`パッケージ`!cite`の`BIFIE.lavaan.survey()`関数を使用する。
+
+
+## 変数
+### 被説明変数
+被説明変数として、「児童算数得点」を使用する。データは学校で実施された到達度評価試験によって収集された。比例尺度をとり、すべての参加国を合わせて、平均500点・標準偏差100点となるよう調整されている。
+
+### 説明変数
+説明変数として、「保護者大卒ダミー」を使用する。データは保護者への質問紙調査によって収集された。保護者大卒ダミーは、父親・母親双方に対する「保護者の方が最後に卒業した学校はどれですか」という質問に対し、どちらか片方でも「大学」または「大学院」と答えた場合に$1$を、そうでない場合に$0$をとる。
+
+### 中間変数
+中間変数は、教育意識について、「希少性志向ダミー」と「普遍性志向ダミー」を設定する。ただし、前章では、教育意識に関する空間を構築した結果、第1軸と第2軸のみでは、空間全体を十分に説明できないことが明らかになった。そこで、本章の分析では、具体的な保護者の行動に基づく中間変数と、前章のクラスター分析によって分類された教育意識に基づく中間変数を、それぞれ投入し、2つのモデルについて推定する。
+
+#### モデル1
+モデル1の中間変数には、希少性志向ダミーとして「知育高頻度ダミー」を、普遍性志向ダミーとして「高成績志向通塾ダミー」を使用する。データはいずれも保護者への質問紙調査によって収集された。知育高頻度ダミーは、読み聞かせなど就学前の知育に関する16項目の質問について、「ほとんど，あるいは，まったくしなかった」を0点、「ときどきした」を1点、「よくした」を2点としてカウント(合計32点)し\citep[15.30]{martinCreatingInterpretingTIMSS2016}、24点相当以上の場合$1$を、24点相当未満の場合$0$をとる。高成績志向通塾ダミーは、「この12か月の間で，あなたのお子さんは，次の教科について学校外で提供される学習指導や個別指導を受けたことがありますか」という質問に対し、「はい， 学級で優秀な成績を収めるために受けた」と答えた場合に$1$を、「はい，勉強についていくために受けた」「いいえ」と答えた場合および無回答の場合に$0$をとる。
+
+#### モデル2
+モデル1の中間変数には、希少性志向ダミーとして「希少性志向クラスタダミー」を、普遍性志向ダミーとして「普遍性志向クラスタダミー」を使用する。保護者への質問紙調査によって収集されたデータを、前章の分析において、クラスタリングしたデータを使用する。希少性志向クラスタダミーは、前章の分析において、クラスタ2およびクラスタ4に該当した場合に$1$を、そうでない場合に$0$を取る。普遍性志向クラスタダミーは、クラスタ3およびクラスタ4に該当した場合に$1$を、そうでない場合に$0$を取る。
+
+### 共変量
+被説明変数と中間変数に影響を与える共変量として、「女子ダミー」を使用する。
+
+
+## 推定結果
+### 要約統計量の推定
+表\@ref(tab:boolSmry)および表\@ref(tab:mmatSmry)に記述統計を示した。図\@ref(fig:ldf1VarSmry)にて、各変数の分布および2変数の関連を可視化した。
+
+```{r ldf1VarSmry, fig.cap="散布図行列"}
+# (asmmat01, isUniv, isElmExcel, isElnOften, isC2_4, isC3_4, isGirl)
+
+model_list$ldf_model %>%
+    dplyr::select(asmmat01, isUniv, isElmExcel, isElnOften, isC2_4, isC3_4, isGirl) %>%
+    dplyr::mutate(
+        dplyr::across(
+            .cols = starts_with("is"),
+            .fns = ~as.factor(.x)
+        )
+    ) %>%
+    dplyr::rename(学力 = asmmat01, 大卒 = isUniv, 通塾 = isElmExcel, 知育 = isElnOften, 希少性C = isC2_4, 普遍性C = isC3_4, 女子 = isGirl) %>%
+    GGally::ggpairs(
+          upper = list(continuous = "cor", combo = "box_no_facet", discrete = "ratio", na = "na"),
+          lower = list(continuous = "points", combo = "facethist", discrete = "facetbar", na = "na"),
+          diag = list(continuous = "densityDiag", discrete = "barDiag", na = "naDiag")
+    )
+```
+
+
+\clearpage
+```{r boolSmry}
+model_list$ldf_model %>%
+    dplyr::select(isUniv, isElmExcel, isElnOften, isC2_4, isC3_4, isGirl) %>% 
+    dplyr::mutate(
+        dplyr::across(
+            .fns = ~as.factor(.x)
+        )
+    ) %>%
+    dplyr::rename(保護者大卒ダミー = isUniv, 高成績志向通塾ダミー = isElmExcel, 知育高頻度ダミー = isElnOften, 希少性クラスタダミー = isC2_4, 普遍性クラスタダミー = isC3_4, 女子ダミー = isGirl) %>%
+    modelsummary::datasummary_skim(type = "categorical", title = "ダミー変数一覧(重み付きなし)", output = "kableExtra") %>%
+    kableExtra::kable_styling()
+```
+
+```{r mmatSmry}
+model_list$ldf_model %>%
+    EdSurvey::summary2("mmat") %>% 
+    .$summary %>% 
+    dplyr::select(-"Variable", -"Weighted N", -"NA's", -"Zero-weights") %>% 
+    dplyr::rename(ケース数 = N, 最小値 = Min., 第1四分位数 = "1st Qu.", 中央値 = Median, 平均値 = Mean, 第3四分位数 = "3rd Qu.", 最大値 = Max., 標準偏差 = SD) %>% 
+    knitr::kable(caption = "児童算数学力・記述統計(重み付き・PV使用)")
+```
+
+
+### 構造方程式モデルの推定
+分析の結果を確認する。表\@ref(tab:bfitQSmry)には児童算数学力への回帰式に対する係数推定結果を、表\@ref(tab:bfitBK1Smry)には希少性志向ダミーへの回帰式に対する係数推定結果を、表\@ref(tab:bfitBK2Smry)には普遍性志向ダミーへの回帰式に対する係数推定結果を、表\@ref(tab:bfitESmry)には各間接効果の比率とモデルの適合度を、それぞれ示した。
+
+\clearpage
+```{r bfitQSmry}
+list(
+    モデル1 = bfit1$lavfit,
+    モデル2 = bfit2$lavfit
+    ) %>%
+    modelsummary::modelsummary(
+        coef_map = c(
+            "asmmat ~1 " = "切片(q0)",
+            "asmmat ~ isUniv" = "保護者大卒ダミー(q1)",
+            "asmmat ~ isElmExcel" = "希少性志向ダミー(q2)",
+            "asmmat ~ isElnOften" = "普遍性志向ダミー(q3)",
+            "asmmat ~ isGirl" = "女子ダミー(q4)",
+            "asmmat ~ isC2_4" = "希少性志向ダミー(q2)",
+            "asmmat ~ isC3_4" = "普遍性志向ダミー(q3)"
+        ),
+        statistic = "({std.error}) [{conf.low}, {conf.high}]",
+        conf_level = .99,
+        gof_map = "none",
+        title = "児童算数学力への回帰式 推定結果",
+        notes = list("(標準誤差) [99％信頼区間・下限, 同・上限]"),
+        output = "kableExtra"
+        ) %>%
+    kableExtra::kable_styling()
+```
+```{r bfitBK1Smry}
+list(
+    モデル1 = bfit1$lavfit,
+    モデル2 = bfit2$lavfit
+    ) %>%
+    modelsummary::modelsummary(
+        coef_map = c(
+            "isElmExcel ~1 " = "切片(b0)",
+            "isElmExcel ~ isUniv" = "保護者大卒ダミー(b1)",
+            "isElmExcel ~ isGirl" = "女子ダミー(b2)",
+            "isC2_4 ~1 " = "切片(b0)",
+            "isC2_4 ~ isUniv" = "保護者大卒ダミー(b1)",
+            "isC2_4 ~ isGirl" = "女子ダミー(b2)"
+        ),
+        statistic = "({std.error}) [{conf.low}, {conf.high}]",
+        conf_level = .99,
+        gof_map = "none",
+        title = "希少性志向ダミーへの回帰式 推定結果",
+        notes = list("(標準誤差) [99％信頼区間・下限, 同・上限]"),
+        output = "kableExtra"
+        ) %>%
+    kableExtra::kable_styling()
+```
+```{r bfitBK2Smry}
+list(
+    モデル1 = bfit1$lavfit,
+    モデル2 = bfit2$lavfit
+    ) %>%
+    modelsummary::modelsummary(
+        coef_map = c(
+            "isElnOften ~1 " = "切片(b0)",
+            "isElnOften ~ isUniv" = "保護者大卒ダミー(b1)",
+            "isElnOften ~ isGirl" = "女子ダミー(b2)",
+            "isC3_4 ~1 " = "切片(b0)",
+            "isC3_4 ~ isUniv" = "保護者大卒ダミー(b1)",
+            "isC3_4 ~ isGirl" = "女子ダミー(b2)"
+        ),
+        statistic = "({std.error}) [{conf.low}, {conf.high}]",
+        conf_level = .99,
+        gof_map = "none",
+        title = "普遍性志向ダミーへの回帰式 推定結果",
+        notes = list("(標準誤差) [99％信頼区間・下限, 同・上限]"),
+        output = "kableExtra"
+        ) %>%
+    kableExtra::kable_styling()
+```
+
+```{r bfitESmry}
+list(
+    モデル1 = bfit1$lavfit,
+    モデル2 = bfit2$lavfit
+    ) %>%
+    modelsummary::modelsummary(
+        coef_map = c(
+            "te := b1+ide1+ide2" = "総合効果",
+            "ide1 := b2*c1" = "間接効果: 希少性志向",
+            "ide2 := b3*d1" = "間接効果: 普遍性志向",
+            "er1 := ide1/te" = "効果比率: 希少性志向",
+            "er2 := ide2/te" = "効果比率: 普遍性志向"
+        ),
+        statistic = "({std.error}) [{conf.low}, {conf.high}]",
+        conf_level = .99,
+        gof_map = list(
+            list("raw" = "nobs", "clean" = "ケース数", "fmt" = 0),
+            list("raw" = "chisq", "clean" = "カイ2乗値", "fmt" = 3),
+            list("raw" = "agfi", "clean" = "AGFI", "fmt" = 3),
+            list("raw" = "cfi", "clean" = "CFI", "fmt" = 3),
+            list("raw" = "rmsea", "clean" = "RMSEA", "fmt" = 3),
+            list("raw" = "aic", "clean" = "AIC", "fmt" = 3)
+        ),
+        title = "総合効果・間接効果・モデル適合度",
+        notes = list("(標準誤差) [99％信頼区間・下限, 同・上限]"),
+        output = "kableExtra"
+        ) %>%
+    kableExtra::kable_styling()
+```
+
+#### モデル1
+まず、保護者大卒ダミーから児童算数得点への総合効果は`r bfit1.pt$est[bfit1.pt$label=="te"] %>% round(2)`点と推定され、1%水準で有意であった。次に、各パスの効果推定量を確認する。保護者大卒ダミーから児童算数得点への直接効果は`r bfit1.pt$est[bfit1.pt$label=="b1"] %>% round(2)`点と推定された。保護者大卒ダミーは、高成績志向通塾となる確率を`r (bfit1.pt$est[bfit1.pt$label=="c1"]*100) %>% round(2)`%、知育高頻度となる確率を`r (bfit1.pt$est[bfit1.pt$label=="d1"]*100) %>% round(2)`%上昇させると推定された。児童算数得点は、保護者学歴が同一の場合、高成績志向通塾ダミーによって`r bfit1.pt$est[bfit1.pt$label=="b2"] %>% round(2)`点、知育高頻度ダミーによって`r bfit1.pt$est[bfit1.pt$label=="b3"] %>% round(2)`点上昇されると推定された。いずれの推定量についても、1%水準で有意であった。間接効果については、高成績志向通塾ダミーを経由するものが`r (bfit1.pt$est[bfit1.pt$label=="er1"]*100) %>% round(2)`%、知育高頻度ダミーを経由するものが`r (bfit1.pt$est[bfit1.pt$label=="er2"]*100) %>% round(2)`%と推定され、いずれも1%水準で有意であった。
+
+#### モデル2
+まず、保護者大卒ダミーから児童算数得点への総合効果は`r bfit2.pt$est[bfit2.pt$label=="te"] %>% round(2)`点と推定され、1%水準で有意であった。次に、各パスの効果推定量を確認する。保護者大卒ダミーから児童算数得点への直接効果は`r bfit2.pt$est[bfit2.pt$label=="b1"] %>% round(2)`点と推定された。保護者大卒ダミーは、希少性志向クラスタとなる確率を`r (bfit2.pt$est[bfit2.pt$label=="c1"]*100) %>% round(2)`%、普遍性志向クラスタとなる確率を`r (bfit2.pt$est[bfit2.pt$label=="d1"]*100) %>% round(2)`%上昇させると推定された。児童算数得点は、保護者学歴が同一の場合、希少性志向クラスタダミーによって`r bfit2.pt$est[bfit2.pt$label=="b2"] %>% round(2)`点、普遍性志向クラスタダミーによって`r bfit2.pt$est[bfit2.pt$label=="b3"] %>% round(2)`点上昇されると推定された。いずれの推定量についても、1%水準で有意であった。間接効果については、希少性志向クラスタダミーを経由するものが`r (bfit2.pt$est[bfit2.pt$label=="er1"]*100) %>% round(2)`%、普遍性志向クラスタダミーを経由するものが`r (bfit2.pt$est[bfit2.pt$label=="er2"]*100) %>% round(2)`%と推定され、いずれも1%水準で有意であった。
+
+## 小括
+本章では、複数の保護者教育意識がそれぞれ、SESと学力の関係をどの程度説明するかという問いに対し、分析を行った。結果、それぞれの保護者教育意識が学力格差を説明する比率は、教育意識を構成する変数によって、大きく異ることが明らかになった。構成する変数を具体的な行動に限定した場合は、希少性志向の教育意識が、普遍性志向の教育意識よりも、学力格差をより説明する。一方、広範な教育意識を含めた場合には、普遍性志向の教育意識が、学力格差をより説明する。教育意識がどのように構成され、各要素がどのように学力やSESと関連するかという点については、かなり複雑であることが予想される。そして、SESが学力に与える影響について、複数の教育意識を合わせても、なお説明できない変動が見られることから、より視野を広げた調査が必要であると考える。
